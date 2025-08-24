@@ -34,12 +34,16 @@ pipeline {
         }
         stage('Run Comparison') {
             steps {
-                sh '''#!/bin/bash
+               sh '''#!/bin/bash
                 mkdir -p ${RESULT_DIR}
-                python3 comparison5.py repo1 repo2 > ${RESULT_DIR}/result.txt
+                TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                OUTFILE=${RESULT_DIR}/result_${TIMESTAMP}.txt
+                echo $OUTFILE > ${RESULT_DIR}/latest_file.txt
+                python3 comparison5.py repo1 repo2 > $OUTFILE
                 '''
             }
         }
+
         stage('Publish Report') {
             steps {
                 archiveArtifacts artifacts: "${RESULT_DIR}/result.txt", fingerprint: true
@@ -69,32 +73,3 @@ pipeline {
     }
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
