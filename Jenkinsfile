@@ -36,7 +36,7 @@ pipeline {
             steps {
                 sh '''#!/bin/bash
                 mkdir -p ${RESULT_DIR}
-                python3 comparison3+input.py repo1 repo2 > ${RESULT_DIR}/result.txt
+                python3 comparison5.py repo1 repo2 > ${RESULT_DIR}/result.txt
                 '''
             }
         }
@@ -69,6 +69,7 @@ pipeline {
     }
     
 }
+
 
 
 
