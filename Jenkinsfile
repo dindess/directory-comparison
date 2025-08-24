@@ -14,11 +14,12 @@ pipeline {
     }
 
     stages {
-     stage('Checkout Comparison Script') {
+        stage('Checkout Comparison Script') {
             steps {
                 git url: "${env.SCRIPT_REPO}", branch: 'main'
             }
         }
+
         stage('Clone Repositories') {
             steps {
                 sh '''
@@ -32,9 +33,10 @@ pipeline {
                 '''
             }
         }
+
         stage('Run Comparison') {
             steps {
-               sh '''#!/bin/bash
+                sh '''#!/bin/bash
                 mkdir -p ${RESULT_DIR}
                 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
                 OUTFILE=${RESULT_DIR}/result_${TIMESTAMP}.txt
@@ -46,30 +48,34 @@ pipeline {
 
         stage('Publish Report') {
             steps {
-                archiveArtifacts artifacts: "${RESULT_DIR}/result.txt", fingerprint: true
+                script {
+                    def outfile = readFile("${RESULT_DIR}/latest_file.txt").trim()
+                    archiveArtifacts artifacts: outfile, fingerprint: true
+                }
             }
         }
 
         stage('Visualize Result') {
             steps {
                 script {
-                    def result = readFile("${RESULT_DIR}/result.txt")
+                    def outfile = readFile("${RESULT_DIR}/latest_file.txt").trim()
+                    def result = readFile(outfile)
                     echo "Comparison Result:\n${result}"
                 }
             }
         }
 
         stage('Upload to FTP') {
-    steps {
-        withCredentials([usernamePassword(credentialsId: 'ftp-credentials', usernameVariable: 'FTP_USER', passwordVariable: 'FTP_PASS')]) {
-            sh '''
-            curl -T ${RESULT_DIR}/result.txt ftp://192.168.1.11/ --user $FTP_USER:$FTP_PASS --ftp-ssl --ssl-reqd --ftp-pasv -k -v
-            
-            '''
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'ftp-credentials', usernameVariable: 'FTP_USER', passwordVariable: 'FTP_PASS')]) {
+                    script {
+                        def outfile = readFile("${RESULT_DIR}/latest_file.txt").trim()
+                        sh """
+                        curl -T $outfile ftp://192.168.1.11/ --user $FTP_USER:$FTP_PASS --ftp-ssl --ssl-reqd --ftp-pasv -k -v
+                        """
+                    }
+                }
+            }
         }
     }
-}
-
-    }
-    
 }
